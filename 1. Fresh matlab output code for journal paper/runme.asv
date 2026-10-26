@@ -1,0 +1,54 @@
+clc; clear; close all;
+
+% EG1= importdata('gate_voltage_current_6.1nm.mat');
+% EG2= importdata('gate_voltage_current_7.52nm.mat');
+% EG3= importdata('gate_voltage_current_8.9nm.mat');
+EG1= importdata('gate_voltage_current_edge_Vacancy_0.85_percent');
+EG2= importdata('gate_voltage_current_edge_Vacancy_2.0_percent');
+EG3= importdata('gate_voltage_current_random_Vacancy_0.85_percent');
+EG4= importdata('gate_voltage_current_random_Vacancy_2.0_percent');
+EG5= importdata('gate_voltage_current_random_Vacancy_5.0_percent');
+EG6= importdata('gate_voltage_current_10.3nm.mat');
+
+Vds_all = 0.05*ones(1,20);
+Vgs_all = EG2.Vgs;
+Ids1 = real(EG1.I');
+Ids2 = real(EG2.I');
+Ids3 = real(EG3.I');
+Ids4 = real(EG4.I');
+Ids5 = real(EG4.I');
+Ids6 = real(EG4.I');
+Id1(14:20)=0;Ids2(11:20)=0; Ids3(14:20)=0; Ids4(11:20)=0; Ids5(10:20)=0;
+
+
+
+figure('Color', [1 1 1]); % Set background to white
+hold on;
+grid on;
+box on;
+
+% --- Plotting with Distinguishable Features ---
+% Red Solid line
+
+% Green Dash-Dot line
+p1 = plot(Vgs_all, Ids1, 'r-.', 'LineWidth', 1.5,'DisplayName', 'No vacancy');
+p2 = plot(Vgs_all, Ids2, 'r-.', 'LineWidth', 1.5,'DisplayName', 'No vacancy');
+p3 = plot(Vgs_all, Ids3, 'g->', 'LineWidth', 1.5,'DisplayName', 'No vacancy');
+p4 = plot(Vgs_all, Ids4, 'b->', 'LineWidth', 1.5,'DisplayName', 'No vacancy');
+
+% --- Optional: Add markers if the data points are sparse ---
+% set(p1, 'Marker', 'o', 'MarkerIndices', 1:10:length(ku1));
+% set(p2, 'Marker', 's', 'MarkerIndices', 1:10:length(ku1));
+% set(p3, 'Marker', '^', 'MarkerIndices', 1:10:length(ku1));
+
+
+% --- Axis Labeling & Styling ---
+xlabel('Vtb (V) ', 'FontSize', 20, 'FontWeight', 'bold');
+ylabel('Ids (A)', 'FontSize', 20, 'FontWeight', 'bold');
+% % % title('Distinguishable Magnetization Plot', 'FontSize', 14);
+
+% --- Legend & Grid Enhancement ---
+legend('show', 'Location', 'best', 'FontSize', 20);
+set(gca, 'GridLineStyle', ':', 'GridAlpha', 0.5);
+set(gcf, 'Position', [100 100 1000 400]);
+set(gca,'FontSize',18)

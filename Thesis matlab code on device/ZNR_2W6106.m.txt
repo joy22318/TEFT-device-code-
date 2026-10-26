@@ -1,0 +1,190 @@
+clc
+clear 
+close all
+caption = 'WSe2';
+
+%% //////// Creating the input \\\\\\\\\\\\\\\\\\\\\\
+ZNR =20;  % Zigzag WSe2 nano ribbon, possible values = 4,8,12,16,20,24,28,........
+% ZNR counts the number of zigzag chains across the ribbon width
+
+% Calculating number of cells required
+nn = ((ZNR-4)/4)+1;
+num_cell = ZNR-nn; %number of cell possible values = 3,6,9,12,15,18,21,25,........
+% num_cell refers to how many zigzag rows you add across the width (Y axis)
+
+Ef=0.8066; % Fermi energy calculated using MATLAB code from the WSe2_band.dat file found after wannierization
+
+%% //////// Main Unit cell positions \\\\\\\\\\\\\\\\\\\\\\
+xa(1)=0; xa(2)=0; xa(3)=1;       % x-coordinates of the first 3 atoms
+ya(1)=0; ya(2)=1; ya(3)=1;       % y-coordinates of the first 3 atoms
+for j=0:num_cell-4               % build remaining atoms by shifting pattern
+    xa(4+j)=xa(1+j)+1;
+    ya(4+j)=ya(1+j)+2;
+end
+za=zeros(1,length(xa))';         % z = 0 (2D structure)
+cp = [xa',ya',za];               % [x,y,z] coordinates for the main unit cell
+
+%% //////// Neighbour Unit cell positions \\\\\\\\\\\\\\\\\\\\\\
+xb(1)=1; xb(2)=1; xb(3)=2;       % shifted version of main unit (neighbor)
+yb(1)=0; yb(2)=1; yb(3)=1;
+for j=0:num_cell-4
+    xb(4+j)=xb(1+j)+1;
+    yb(4+j)=yb(1+j)+2;
+end
+zb=zeros(1,length(xb))';
+cpp = [xb',yb',zb];              % [x,y,z] for neighbor unit cell%% //////// Main Unit \\\\\\\\\\\\\\\\\\\\\\
+
+% \\\\\\\\\\\\\\\\\ Atom position //////////////////
+na = num_cell/3;
+at1=[1 2 3;0 2 0;1 0 3]; Wpos = '2-W';   % Options: '1-W', '2-W', '3-W'
+at=[1 2 3;0 2 0;1 0 3];
+for j=1:na-1
+    at=[at;at1];
+end
+
+%% \\\\\\\\\\\\\\\ Calling the function///////////////
+cell_pos = cp;      % unit cell
+cell_pos1 = cpp;    % neighbour unit cell
+atomst = at;        % unit cell atoms
+atomst1 = at;       % neighbour cell atoms
+proj = [6 10 6];    % [n_orb_SeTop, n_orb_W, n_orb_SeBot]
+HNN = 20;            % hopping cutoff (nearest-neighbor range)
+Vext = 0;           % external voltage = 0 (will add later)
+
+% bigH  = intra-cell Hamiltonian
+% bigU  = coupling to next cell
+% bigUbar = coupling to previous cell
+%[bigH,bigU,bigUbar]=cal_H_U_Ubar(caption,cell_pos,cell_pos1,atomst,atomst1,proj,HNN,Vext);
+%[hr,hc]=size(bigH); 
+
+%% //////// k-path generation \\\\\\\\\\\\\\\\\\\\\\
+kpath=[0.0 0 0;      % -X
+       0 0.5 0;      % Γ
+       0.0 0 0];     % X
+nopot=[40 40];       % number of points in each segment
+[kpoints,kpo]=kpgen(kpath,nopot);
+
+%% //////// External field setup \\\\\\\\\\\\\\\\\\\\\\
+dSe = 3.352; % Se(top)-Se(bottom) spacing in Å (≈3.352 Å)
+            % Using this, Electric field will be in V/Å
+
+Vgs =[0 0.6 1.2]; % Gate voltages
+Vds=0.0;        % Drain bias (not used here)
+
+% proj decomposition
+nSeT = proj(1);  % orbitals per top Se
+nW   = proj(2);  % orbitals per W
+nSeB = proj(3);  % orbitals per bottom Se
+
+% orbitals in two Se–W–Se sandwiches
+orb_per_pattern = 2 * (nSeT + nW + nSeB);  
+
+for ii=1:length(Vgs)
+    Voltage=Vgs(ii)
+    [bigH,bigU,bigUbar]=cal_H_U_Ubar(caption,cell_pos,cell_pos1,atomst,atomst1,proj,HNN,Vext);
+    Electric_field=-(2*Voltage)/(dSe)
+    Electric_field_array(ii)=Electric_field;
+
+Unit_cell_H = zeros(orb_per_pattern);
+offset = 0;
+for s = 1:2
+
+
+    % Se_top: +V on diagonal only
+    idx = offset + (1:nSeT);
+    Unit_cell_H(idx, idx) = Unit_cell_H(idx, idx) + Voltage*eye(nSeT);
+    offset = offset + nSeT;
+    % W: 0 (do nothing)
+    offset = offset + nW;
+    % Se_bottom: -V on diagonal only
+    idx = offset + (1:nSeB);
+    Unit_cell_H(idx, idx) = Unit_cell_H(idx, idx) - Voltage*eye(nSeB);
+    offset = offset + nSeB;
+
+end
+
+
+BBBB=diag(ones(1,na));
+big_H_external_voltage=kron(BBBB,Unit_cell_H);
+bigH=bigH+big_H_external_voltage;
+
+%% External voltage apply end 
+
+    HB=cell(3,1);
+    HB{1,1}=sparse(bigUbar);
+    HB{2,1}=sparse(bigH);
+    HB{3,1}=sparse(bigU);
+    unique_trans_vec=[0 -1 0;0 0 0;0 1 0];
+    [hr,hc]=size(HB{2,1});
+    Es=[];
+    [kpr,kpc]=size(kpoints);
+    xx=1;
+    yy=1;
+    for k=1:kpr
+        Hk=zeros(hr,hc);
+        for j=1:3
+            Hb=HB{j,1};
+            Hk=Hk+Hb.*exp(1i*sum(unique_trans_vec(j,:).*kpoints(k,:)));
+        end
+        [W,Ek]=eig(Hk);
+             En=sort(real(diag(Ek)));
+            Es(:,k)=En-Ef;
+            band_diagram_iteration_left = kpr-k
+    end
+
+    Ess=Es';
+
+    [row,column]=size(Ess);
+
+    for i=1:column
+        if(mod(i,2)==1)
+            Esup(:,xx)=Ess(:,i);
+            xx=xx+1;
+        end
+        if(mod(i,2)==0)
+            Esdown(:,yy)=Ess(:,i);
+            yy=yy+1;
+        end
+
+    end
+
+figure
+% Generate normalized x-axis from 0 to 1
+x_normalized = linspace(0, 1, kpr);  % kpr is number of k-points
+% 
+% % Plot with new x-axis
+% plot(x_normalized, Esup,'b','LineWidth',1)
+% hold on
+
+% Plot with new x-axis
+plot(x_normalized, Esup+Ef,'r','LineWidth',1)
+hold on
+plot(x_normalized, Esdown+Ef,'b','LineWidth',1)
+
+axis tight
+ylim([-1.25 2.25])
+%plot(x_normalized, Ef*ones(1,kpr),'k-.','LineWidth',0.9)
+% plot(x_normalized, 0*ones(1,kpr),'k--','LineWidth',0.9) 
+% Optional: add Fermi level line to the plot
+yline(Ef, '-.k', sprintf('Ef = %.4f eV', Ef), 'LabelHorizontalAlignment', 'left','LineWidth',0.9);
+
+hold off
+
+% Label axes
+ylabel('E-Ef (eV)');
+xlabel('k_x (a / 2\pi)');
+
+% Define custom x-ticks and labels
+xticks(0:0.2:1);  % Tick marks at 0, 0.2, ..., 1
+xticklabels({'0', '0.2', '0.4', '0.6', '0.8', '1.0'});
+%title({['ZNR = ', num2str(ZNR), ...
+       %  ', proj = [', num2str(proj, '%d, '), '],'], ...
+       % [ Wpos, ', V_{gs} = ', num2str(Voltage), ' V']})
+title({['V_{gs} = ', num2str(Voltage), ' V']})
+filename = sprintf('Fig_ZNR%d.png', ii');
+print(gcf, filename, '-dpng', '-r1200'); 
+end
+% Simple auto-save at the end of your script
+filename = sprintf('Fig_ZNR%d.png', ...
+    ii);
+print(gcf, filename, '-dpng', '-r1200');  % save as 600 dpi PNG

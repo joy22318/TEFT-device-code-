@@ -1,0 +1,64 @@
+&CONTROL
+    calculation = "bands"
+    prefix      = 'wte2'
+    outdir          = '.' 
+   wfcdir          = '.' 
+   pseudo_dir      = '.' 
+   verbosity       = 'high'
+/
+
+&SYSTEM
+     a                         =  3.49794e+00
+    b                         =  6.33827e+00
+    c                         =  1.54319e+01
+    degauss                   =  1.00000e-02
+    ecutrho                   =  5.000e+02
+    ecutwfc                   =  6.60000e+01
+    ibrav                     = 8
+    nat                       = 6
+    ntyp                      = 2
+	nbnd                      = 44
+	starting_magnetization    = 0.0001
+    occupations               = "smearing"
+    degauss                   = 0.01 
+	input_dft                 = "pbe"
+    smearing                  = "gaussian"
+    nosym                     =.true.
+	nosym                     =.true.
+    noncolin                  = .TRUE.
+    lspinorb                  = .TRUE.
+/
+
+&ELECTRONS
+    conv_thr         =  1.00000e-06
+    mixing_beta      =  4.00000e-01
+	diagonalization = 'david'
+/
+
+&BANDS
+    lsym           = .FALSE.
+    spin_component = 1
+/
+
+K_POINTS {crystal_b}
+3
+-0.5 0.0 0.0 30 ! X
+0.0 0.0 0.0 30 ! Γ (Gamma)
+0.5 0.0 0.0 1 ! X
+
+
+ATOMIC_SPECIES
+Te    127.60000   Te_ONCV_PBE_fr.upf
+W     183.84000   W_ONCV_PBE_fr.upf
+
+ATOMIC_POSITIONS (angstrom)
+Te       0.000000439   1.314734543   6.356243380
+Te       1.748970609   4.433356440   5.735437376
+Te      -0.000000024   5.447608234   9.929293791
+Te       1.748971075   2.228346833   9.307761710
+W        1.748970499   6.067549018   7.933401282
+W        0.000000402   3.814154934   7.732324461
+
+
+
+

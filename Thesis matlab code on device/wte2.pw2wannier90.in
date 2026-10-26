@@ -1,0 +1,10 @@
+&inputpp
+  outdir='.'
+  prefix = 'wte2',
+  seedname='wte2',
+  spin_component = 'none',
+  write_amn = .true.,
+  write_mmn = .true.,
+  write_spn=.true.,
+/
+

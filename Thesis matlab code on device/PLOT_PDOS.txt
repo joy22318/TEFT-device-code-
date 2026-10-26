@@ -1,0 +1,19 @@
+&PLOT_PDOS
+prefix="wte2", !mandatory if &WRITE_PDOS is missing
+inputdir="D:\1.Wte2_HSE_Jan25_part3\wte2.fat_band", !mandatory if &WRITE_PDOS is missing. directory where .MAT file are stored. this directory is outdir of &WRITE_PDOS/prefix.fat_band
+Delimiter="band", !mandatory if &WRITE_PDOS is missing , can take one of the folllowing: "scf" or "nscf" or "band"
+Want_States=[13 14 15 16 17 18 31 32 33 34 35 36 49 50 51 52 53 54 67 68 69 70 71 72;81 82 83 84 85 86 87 88 89 90 101 102 103 104 105 106 107 108 109 110 0 0 0 0],!mandatory 
+Legend_Details={"\itTe_{p}";"\itW_{d}"}, !optional
+outdir=".", !optional
+!Band_Limit=[1 202], !optional , positive integers . [min_band,max_band]. if you dont know any limit put zero there.
+Color_Matrix=[1 0 0; 0 1 0], 
+Sorting_Type="ascend", !optional , "ascend" or "descend"
+Weight_Multiplier = 150,  !optional , can be Natural number
+Justify_Zero = 0.02,  !optional
+Draw_Fermi = 1, !optional , can be 0 or 1
+!Aspect_Ratio = [0.6 1 1],  !optional
+xy_limit=[NaN,NaN;-1,1], !optional , first row x limit can be NaN or positive intergers, 2nd row ylimit can be NaN or real number
+Interpoint=100, !optional , positive intergers
+Figure_Spec={"Times","bold",12}, !optional
+
+/

@@ -1,0 +1,9 @@
+&PROJWFC
+prefix    = "wte2"
+outdir = '.' ,
+kresolveddos=.true,
+degauss=0.01,
+filpdos   = "wte2_final1.k",
+/
+
+
